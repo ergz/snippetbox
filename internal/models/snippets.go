@@ -21,7 +21,7 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (int, e
 	return 0, nil
 }
 
-func (m *SnippetModel) Get(id int) (Snippet, error) {
+func (m *SnippetModel) Get(id int) (*Snippet, error) {
 	return nil, nil
 }
 
