@@ -10,7 +10,7 @@ type Snippet struct {
 	ID      int
 	Title   string
 	Content string
-	Create  time.Time
+	Created time.Time
 	Expires time.Time
 }
 
@@ -38,7 +38,7 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 	row := m.DB.QueryRow(statment, id)
 	var snip Snippet
 
-	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+	err := row.Scan(&snip.ID, &snip.Title, &snip.Content, &snip.Created, &snip.Expires)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Snippet{}, ErrNoRecord
@@ -50,6 +50,26 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 	return snip, nil
 }
 
-func (m *SnippetModel) Latest() ([]Snippet, error) {
-	return nil, nil
+func (m *SnippetModel) Latest(n int) ([]Snippet, error) {
+	statement := `SELECT * FROM snippets where expires > CURRENT_TIMESTAMP ORDER BY id DESC LIMIT ?`
+	rows, err := m.DB.Query(statement, n)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var snippets []Snippet
+
+	for rows.Next() {
+		var s Snippet
+		err = rows.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+		if err != nil {
+			return nil, err
+		}
+
+		snippets = append(snippets, s)
+	}
+
+	return snippets, nil
 }

@@ -10,7 +10,7 @@ func (app *application) serverError(w http.ResponseWriter, r *http.Request, err 
 	var uri = r.URL.RequestURI()
 	var trace = string(debug.Stack())
 
-	app.logger.Error(err.Error(), "method", method, "uri", uri, "trace", trace)
+	app.logger.Error(err.Error(), "method name is:", method, "uri", uri, "trace", trace)
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
