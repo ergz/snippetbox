@@ -6,31 +6,29 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/julienschmidt/httprouter"
 	"snippetbox.ergz.com/internal/models"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		app.notFound(w)
-		return
-	}
 
-	snippets, err := app.snippets.Latest(5)
+	snippets, err := app.snippets.Latest(10)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
-	data := templateData{
-		Snippets: snippets,
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
 
 	app.render(w, r, http.StatusOK, "home.tmpl", data)
 
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
 		return
@@ -46,15 +44,20 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := templateData{
-		Snippet: snippet,
-	}
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
 
 	app.render(w, r, http.StatusOK, "view.tmpl", data)
 
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	app.render(w, r, http.StatusOK, "create.tmpl", data)
+
+}
+
+func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 
 		w.Header().Set("Allow", "POST")
@@ -72,6 +75,5 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("the value of the id is: %d\n", id)
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
 }
